@@ -14,15 +14,15 @@
 <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
 <title>Arena Strike</title>
 <style>
-:root{--bg:#0b0f14;--fg:#e8eef5;--ac:#ff5a36;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+:root{--bg:#0b0f14;--fg:#e8eef5;--ac:#ff5a36;box-sizing:border-box}
+html,body{margin:0;position:fixed;inset:0;width:100%;height:100%;background:#0b0f14;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
 *{-webkit-user-select:none;user-select:none;-webkit-user-drag:none}
 img,canvas{-webkit-user-drag:none;pointer-events:auto}
 @media print{html,body{display:none!important}}
-canvas{display:block}
+canvas{display:block;position:fixed;inset:0;width:100vw;height:100vh;height:100dvh}
 #hud{position:fixed;inset:0;pointer-events:none;font-weight:700;text-shadow:0 1px 3px #000}
 #hud div{position:absolute}
-#hp{left:16px;bottom:16px;font-size:28px}#ammo{right:16px;bottom:16px;font-size:28px}
+#hp{left:calc(16px + env(safe-area-inset-left,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));font-size:28px}#ammo{right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));font-size:28px}
 #info{left:16px;top:12px;font-size:18px}
 #cross{left:50%;top:50%;width:16px;height:16px;margin:-8px;border:2px solid #fff8;border-radius:50%}
 #flash{inset:0;background:red;opacity:0;transition:opacity .25s}
@@ -36,7 +36,7 @@ button{background:var(--ac);color:#fff;border:0;border-radius:10px;padding:14px 
 <div class="tb" id="bf">ВОГОНЬ</div><div class="tb" id="br">ПЕРЕЗАР.</div><div class="tb" id="bs">ЗБРОЯ</div>
 <div id="ov"><h1>ARENA STRIKE</h1>
 <p id="msg">Виживай у хвилях ботів. Хедшот = подвійна шкода. Вбивство відновлює трохи здоровʼя.</p>
-<p id="ctl">WASD — рух · Миша — приціл · ЛКМ — вогонь · 1/2/3 — зброя · R — перезарядка · Shift — біг · ПКМ — приціл</p>
+<p id="ctl">WASD — рух · Миша — приціл · ЛКМ — вогонь · 1-7 — зброя · R — перезарядка · Shift — біг · ПКМ — приціл</p>
 <button id="go">ГРАТИ</button></div>
 <script>
 (function(){
@@ -78,6 +78,21 @@ const WM={"pistol":{"m":[[[0.667,0.667,0.667],[0.0974,0.3896,-0.487,0.0974,0.220
 const WS=[{n:'Пістолет',k:'pistol',len:.3,dmg:35,mag:12,cd:.25,auto:false,rel:1.2,rec:1.6},{n:'Автомат',k:'machinegun',len:.55,dmg:25,mag:30,cd:.09,auto:true,rel:1.6,rec:1},{n:'Ракетниця',k:'rocketlauncher',len:.85,dmg:0,mag:3,cd:.9,auto:false,rel:2.4,rec:2.6,rocket:true}];
 WS.forEach(w=>{const g=new THREE.Group();for(const [c,p] of WM[w.k].m){const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(p,3));geo.computeVertexNormals();g.add(new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:new THREE.Color(c[0],c[1],c[2]).multiplyScalar(1.15),side:THREE.DoubleSide})))}
 g.scale.setScalar(w.len);g.position.set(.24,-.24,-.3-w.len*.45);g.visible=false;gun.add(g);w.obj=g;w.ammo=w.mag});
+
+function bx(g,w,h,d,x,y,z,c){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:c}));m.position.set(x,y,z);g.add(m);return m}
+function cyl(g,r,l,x,y,z,c){const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,l,10),new THREE.MeshLambertMaterial({color:c}));m.rotation.x=Math.PI/2;m.position.set(x,y,z);g.add(m);return m}
+const MK={
+shotgun:()=>{const g=new THREE.Group();bx(g,.07,.09,.5,0,0,-.2,0x4a3a2a);cyl(g,.03,.8,0,.04,-.55,0x3a3d42);cyl(g,.026,.7,0,-.01,-.5,0x2d2f33);bx(g,.075,.08,.22,0,-.02,-.62,0x6b4a2a);bx(g,.06,.14,.08,0,-.1,.0,0x2d2f33);return g},
+sniper:()=>{const g=new THREE.Group();bx(g,.06,.1,.6,0,0,.05,0x2f3b2f);cyl(g,.022,1.1,0,.03,-.65,0x25272a);cyl(g,.04,.35,0,.12,-.1,0x15171a);bx(g,.03,.05,.04,0,.08,-.1,0x15171a);bx(g,.05,.16,.06,0,-.12,.15,0x2f3b2f);bx(g,.05,.08,.3,0,-.02,.4,0x4a3a2a);return g},
+smg:()=>{const g=new THREE.Group();bx(g,.07,.11,.38,0,0,0,0x3a3d42);cyl(g,.02,.3,0,.02,-.3,0x25272a);bx(g,.045,.22,.06,0,-.16,.03,0x1d1f22);bx(g,.05,.14,.06,0,-.1,.17,0x2d2f33);bx(g,.03,.03,.1,0,.075,-.05,0x15171a);return g},
+heavy:()=>{const g=new THREE.Group();bx(g,.1,.14,.5,0,0,0,0x5a4a2a);cyl(g,.05,.55,0,.02,-.45,0x2d2f33);cyl(g,.03,.2,0,.02,-.8,0x15171a);bx(g,.1,.2,.14,0,-.15,.1,0x3a3a3a);bx(g,.06,.12,.08,0,-.1,.28,0x2d2f33);return g}
+};
+const NW=[
+{n:'Дробовик',k:'shotgun',len:.8,dmg:14,mag:6,cd:.8,auto:false,rel:2,rec:2.4,pel:8,spread:.07},
+{n:'Снайперка',k:'sniper',len:.8,dmg:110,mag:5,cd:1.1,auto:false,rel:2.2,rec:2.8,zoomFov:14},
+{n:'Міні-автомат',k:'smg',len:.8,dmg:14,mag:40,cd:.06,auto:true,rel:1.5,rec:.7,spread:.02},
+{n:'Важкий кулемет',k:'heavy',len:.8,dmg:22,mag:80,cd:.07,auto:true,rel:3.2,rec:1.2,spread:.03}];
+NW.forEach(w=>{const g=MK[w.k]();g.scale.setScalar(w.len);g.position.set(.24,-.24,-.3-w.len*.2);g.visible=false;gun.add(g);w.obj=g;w.ammo=w.mag;WS.push(w)});
 const muzzle=new THREE.PointLight(0xffaa44,0,8);muzzle.position.set(.25,-.2,-.9);C.add(muzzle);
 // state
 const P={pos:new THREE.Vector3(0,1.7,0),yaw:0,pitch:0,hp:100,ammo:30,rel:0,cd:0};
@@ -89,7 +104,7 @@ const l=new THREE.Mesh(new THREE.BoxGeometry(.5,.5,.3),bodyM);l.position.y=.25;[
 const a=Math.random()*6.28,r=A-3;e.position.set(Math.cos(a)*r,0,Math.sin(a)*r);resolve(e.position,.4);
 e.hp=40+wave*5;e.cd=1+Math.random()*2;e.sp=2+Math.random()*1.2+wave*.1;S.add(e);enemies.push(e)}
 function nextWave(){wave++;for(let i=0;i<3+wave*2;i++)spawn()}
-function setZoom(z){zoom=z;fovT=z?38:75;$('cross').style.transform=z?'scale(.45)':'';$('cross').style.borderColor=z?'#fffd':'#fff8'}
+function setZoom(z){zoom=z;fovT=z?(WS[cw]&&WS[cw].zoomFov||38):75;$('cross').style.transform=z?'scale(.45)':'';$('cross').style.borderColor=z?'#fffd':'#fff8'}
 function reset(){setZoom(false);enemies.forEach(e=>S.remove(e));enemies=[];wave=0;score=0;kills=0;Object.assign(P,{hp:100,rel:0,cd:0,yaw:0,pitch:0});WS.forEach(w=>w.ammo=w.mag);sel(1);P.pos.set(0,1.7,0);nextWave()}
 const ray=new THREE.Raycaster(),flash=$('flash');
 function hurt(d){P.hp-=d;flash.style.opacity=.5;setTimeout(()=>flash.style.opacity=0,120);if(P.hp<=0){P.hp=0;end()}}
@@ -100,24 +115,26 @@ for(const e of enemies.slice()){const d=e.position.distanceTo(pt);if(d<6)dmgEnem
 const dp=P.pos.distanceTo(pt);if(dp<5)hurt(Math.round(40*(1-dp/5)))}
 function shoot(){const w=WS[cw];if(P.cd>0||P.rel>0)return;if(w.ammo<=0){reload();return}
 w.ammo--;P.cd=w.cd;recoil=w.rec;muzzle.intensity=2;setTimeout(()=>muzzle.intensity=0,50);P.pitch+=.004*w.rec;
-ray.setFromCamera({x:(Math.random()-.5)*.012,y:(Math.random()-.5)*.012},C);
+const n=w.pel||1,sp=(w.spread||.012)*(zoom?.35:1);
+for(let i=0;i<n;i++){
+ray.setFromCamera({x:(Math.random()-.5)*sp,y:(Math.random()-.5)*sp},C);
 const hits=ray.intersectObjects([...solid,...enemies],true);
 if(w.rocket){explode(hits.length?hits[0].point:C.position.clone().add(ray.ray.direction.clone().multiplyScalar(60)));fire=false;return}
-if(hits.length){const o=hits[0].object;if(o.userData.e){const hd=o.userData.head;dmgEnemy(o.userData.e,hd?w.dmg*2:w.dmg,hd)}}
+if(hits.length){const o=hits[0].object;if(o.userData.e){const hd=o.userData.head;dmgEnemy(o.userData.e,hd?w.dmg*2:w.dmg,hd)}}}
 if(!w.auto)fire=false}
 function reload(){const w=WS[cw];if(P.rel<=0&&w.ammo<w.mag)P.rel=w.rel}
-function sel(i){cw=i;WS.forEach((w,j)=>w.obj.visible=j==i);P.rel=0;P.cd=.25}
+function sel(i){cw=i;WS.forEach((w,j)=>w.obj.visible=j==i);P.rel=0;P.cd=.25;if(zoom)setZoom(true)}
 function end(){playing=false;setZoom(false);if(document.pointerLockElement)document.exitPointerLock();$('msg').textContent='Ти загинув! Хвиля '+wave+' · Вбито '+kills+' · Рахунок '+score;$('go').textContent='ЩЕ РАЗ';$('ov').style.display='flex'}
 // input
 $('go').onclick=()=>{reset();playing=true;$('ov').style.display='none';if(!touch)R.domElement.requestPointerLock()};
 if(touch){$('ctl').textContent='Лівий палець — рух · правий — приціл · кнопки — вогонь/перезарядка · подвійний тап справа — приціл (зближення)';$('bf').style.display=$('br').style.display=$('bs').style.display='flex'}
-addEventListener('keydown',e=>{keys[e.code]=1;if(e.code=='KeyR')reload();if(e.code=='Digit1')sel(0);if(e.code=='Digit2')sel(1);if(e.code=='Digit3')sel(2)});addEventListener('keyup',e=>keys[e.code]=0);
+addEventListener('keydown',e=>{keys[e.code]=1;if(e.code=='KeyR')reload();if(e.code=='Digit1')sel(0);if(e.code=='Digit2')sel(1);if(e.code=='Digit3')sel(2);if(e.code=='Digit4')sel(3);if(e.code=='Digit5')sel(4);if(e.code=='Digit6')sel(5);if(e.code=='Digit7')sel(6)});addEventListener('keyup',e=>keys[e.code]=0);
 addEventListener('mousemove',e=>{if(document.pointerLockElement){const zk=zoom?.5:1;P.yaw-=e.movementX*.0022*zk;P.pitch=Math.max(-1.4,Math.min(1.4,P.pitch-e.movementY*.0022*zk))}});
 addEventListener('mousedown',e=>{if(!playing)return;if(!document.pointerLockElement)R.domElement.requestPointerLock();else if(e.button==0)fire=true});
 addEventListener('mouseup',()=>fire=false);
 addEventListener('mousedown',e=>{if(e.button==2&&playing)setZoom(!zoom)});
 const tch={};
-addEventListener('touchstart',e=>{for(const t of e.changedTouches){const el=document.elementFromPoint(t.clientX,t.clientY);if(el&&el.id=='bf'){fire=true;tch[t.identifier]='f'}else if(el&&el.id=='br'){reload();tch[t.identifier]='r'}else if(el&&el.id=='bs'){sel((cw+1)%3);tch[t.identifier]='r'}else if(t.clientX<innerWidth/2){tch[t.identifier]={m:1,x:t.clientX,y:t.clientY}}else{const now=performance.now();if(playing&&now-lastTap<320&&Math.hypot(t.clientX-lastTapX,t.clientY-lastTapY)<60){setZoom(!zoom);lastTap=0}else{lastTap=now;lastTapX=t.clientX;lastTapY=t.clientY}tch[t.identifier]={l:1,x:t.clientX,y:t.clientY}}}},{passive:true});
+addEventListener('touchstart',e=>{for(const t of e.changedTouches){const el=document.elementFromPoint(t.clientX,t.clientY);if(el&&el.id=='bf'){fire=true;tch[t.identifier]='f'}else if(el&&el.id=='br'){reload();tch[t.identifier]='r'}else if(el&&el.id=='bs'){sel((cw+1)%WS.length);tch[t.identifier]='r'}else if(t.clientX<innerWidth/2){tch[t.identifier]={m:1,x:t.clientX,y:t.clientY}}else{const now=performance.now();if(playing&&now-lastTap<320&&Math.hypot(t.clientX-lastTapX,t.clientY-lastTapY)<60){setZoom(!zoom);lastTap=0}else{lastTap=now;lastTapX=t.clientX;lastTapY=t.clientY}tch[t.identifier]={l:1,x:t.clientX,y:t.clientY}}}},{passive:true});
 addEventListener('touchmove',e=>{for(const t of e.changedTouches){const s=tch[t.identifier];if(!s||typeof s=='string')continue;if(s.m){joy.x=Math.max(-1,Math.min(1,(t.clientX-s.x)/50));joy.y=Math.max(-1,Math.min(1,(t.clientY-s.y)/50))}else{const zk=zoom?.5:1;P.yaw-=(t.clientX-s.x)*.006*zk;P.pitch=Math.max(-1.4,Math.min(1.4,P.pitch-(t.clientY-s.y)*.006*zk));s.x=t.clientX;s.y=t.clientY}}},{passive:true});
 addEventListener('touchend',e=>{for(const t of e.changedTouches){const s=tch[t.identifier];if(s=='f')fire=false;if(s&&s.m)joy={x:0,y:0};delete tch[t.identifier]}},{passive:true});
 addEventListener('resize',()=>{R.setSize(innerWidth,innerHeight);C.aspect=innerWidth/innerHeight;C.updateProjectionMatrix()});
@@ -138,7 +155,7 @@ e.cd-=dt;if(e.cd<=0&&d<28){e.cd=1.1+Math.random();ray.set(new THREE.Vector3(e.po
 }
 recoil=Math.max(0,recoil-dt*8);if(Math.abs(C.fov-fovT)>.05){C.fov+=(fovT-C.fov)*Math.min(1,dt*14);C.updateProjectionMatrix()}
 C.position.set(P.pos.x,P.pos.y+Math.sin(bob)*.04,P.pos.z);C.rotation.set(P.pitch,P.yaw,0,'YXZ');
-gun.position.z=recoil*.04;gun.position.x=zoom?-.18:0;gun.position.y=zoom?.05:0;gun.rotation.x=recoil*.04+(P.rel>0?-.5:0);for(let i=fx.length-1;i>=0;i--){const f=fx[i];f.t+=dt;f.m.scale.setScalar(1+f.t*9);f.m.material.opacity=Math.max(0,.8-f.t*2);if(f.t>.4){S.remove(f.m);fx.splice(i,1)}}
+gun.position.z=recoil*.04;gun.position.x=zoom?-.18:0;gun.position.y=zoom?.05:0;gun.visible=!(zoom&&WS[cw].zoomFov);gun.rotation.x=recoil*.04+(P.rel>0?-.5:0);for(let i=fx.length-1;i>=0;i--){const f=fx[i];f.t+=dt;f.m.scale.setScalar(1+f.t*9);f.m.material.opacity=Math.max(0,.8-f.t*2);if(f.t>.4){S.remove(f.m);fx.splice(i,1)}}
 $('hp').textContent='❤ '+Math.ceil(P.hp);$('ammo').textContent=WS[cw].n+' · '+(P.rel>0?'Перезарядка…':WS[cw].ammo+' / '+WS[cw].mag);
 $('info').innerHTML='Хвиля '+wave+'<br>Рахунок '+score+' · Ворогів: '+enemies.length;
 R.render(S,C)}
