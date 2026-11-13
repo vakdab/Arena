@@ -1,9 +1,9 @@
 {
   "name": "Arena Strike",
   "short_name": "Arena",
-  "id": "/",
-  "start_url": ".",
-  "scope": ".",
+  "id": "./",
+  "start_url": "./?source=pwa",
+  "scope": "./",
   "description": "Виживай у хвилях ботів. 3D шутер на арені.",
   "display": "fullscreen",
   "display_override": [
