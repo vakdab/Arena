@@ -1,10 +1,23 @@
 <!DOCTYPE html>
 <html lang="uk"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Arena Strike">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<meta name="referrer" content="no-referrer">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>Arena Strike</title>
 <style>
 :root{--bg:#0b0f14;--fg:#e8eef5;--ac:#ff5a36;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;overflow:hidden;touch-action:none;user-select:none}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+*{-webkit-user-select:none;user-select:none;-webkit-user-drag:none}
+img,canvas{-webkit-user-drag:none;pointer-events:auto}
+@media print{html,body{display:none!important}}
 canvas{display:block}
 #hud{position:fixed;inset:0;pointer-events:none;font-weight:700;text-shadow:0 1px 3px #000}
 #hud div{position:absolute}
@@ -22,8 +35,26 @@ button{background:var(--ac);color:#fff;border:0;border-radius:10px;padding:14px 
 <div class="tb" id="bf">ВОГОНЬ</div><div class="tb" id="br">ПЕРЕЗАР.</div><div class="tb" id="bs">ЗБРОЯ</div>
 <div id="ov"><h1>ARENA STRIKE</h1>
 <p id="msg">Виживай у хвилях ботів. Хедшот = подвійна шкода. Вбивство відновлює трохи здоровʼя.</p>
-<p id="ctl">WASD — рух · Миша — приціл · ЛКМ — вогонь · 1/2/3 — зброя · R — перезарядка · Shift — біг</p>
+<p id="ctl">WASD — рух · Миша — приціл · ЛКМ — вогонь · 1/2/3 — зброя · R — перезарядка · Shift — біг · ПКМ — приціл</p>
 <button id="go">ГРАТИ</button></div>
+<script>
+(function(){
+const stop=e=>{e.preventDefault();e.stopPropagation();return false};
+['contextmenu','copy','cut','paste','dragstart','selectstart','drop'].forEach(n=>document.addEventListener(n,stop,true));
+document.addEventListener('keydown',e=>{
+ const k=(e.key||'').toLowerCase(),c=e.ctrlKey||e.metaKey;
+ if(e.key==='F12'||(c&&e.shiftKey&&['i','j','c','k'].includes(k))||(c&&['u','s','p','a','c','x','v'].includes(k))){e.preventDefault();e.stopPropagation()}
+ if(e.key==='PrintScreen'){try{navigator.clipboard.writeText('')}catch(_){}}
+},true);
+document.addEventListener('gesturestart',e=>e.preventDefault());
+document.addEventListener('dblclick',e=>e.preventDefault());
+let lt=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-lt<350)e.preventDefault();lt=n},{passive:false});
+document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
+window.addEventListener('beforeprint',e=>{document.body.style.display='none'});
+window.addEventListener('afterprint',()=>{document.body.style.display=''});
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+})();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const touch='ontouchstart' in window||navigator.maxTouchPoints>0;
@@ -49,7 +80,7 @@ g.scale.setScalar(w.len);g.position.set(.24,-.24,-.3-w.len*.45);g.visible=false;
 const muzzle=new THREE.PointLight(0xffaa44,0,8);muzzle.position.set(.25,-.2,-.9);C.add(muzzle);
 // state
 const P={pos:new THREE.Vector3(0,1.7,0),yaw:0,pitch:0,hp:100,ammo:30,rel:0,cd:0};
-let cw=1;const fx=[];let enemies=[],wave=0,score=0,kills=0,playing=false,fire=false,sprint=false,bob=0,recoil=0;
+let cw=1,zoom=false,fovT=75,lastTap=0,lastTapX=0,lastTapY=0;const fx=[];let enemies=[],wave=0,score=0,kills=0,playing=false,fire=false,sprint=false,bob=0,recoil=0;
 const keys={};let joy={x:0,y:0};
 const bodyM=new THREE.MeshLambertMaterial({color:0xaa2e2e}),headM=new THREE.MeshLambertMaterial({color:0xe0b48a});
 function spawn(){const e=new THREE.Group();const b=new THREE.Mesh(new THREE.BoxGeometry(.7,1.1,.4),bodyM);b.position.y=.95;const h=new THREE.Mesh(new THREE.SphereGeometry(.22,10,8),headM);h.position.y=1.72;h.userData.head=true;
@@ -57,7 +88,8 @@ const l=new THREE.Mesh(new THREE.BoxGeometry(.5,.5,.3),bodyM);l.position.y=.25;[
 const a=Math.random()*6.28,r=A-3;e.position.set(Math.cos(a)*r,0,Math.sin(a)*r);resolve(e.position,.4);
 e.hp=40+wave*5;e.cd=1+Math.random()*2;e.sp=2+Math.random()*1.2+wave*.1;S.add(e);enemies.push(e)}
 function nextWave(){wave++;for(let i=0;i<3+wave*2;i++)spawn()}
-function reset(){enemies.forEach(e=>S.remove(e));enemies=[];wave=0;score=0;kills=0;Object.assign(P,{hp:100,rel:0,cd:0,yaw:0,pitch:0});WS.forEach(w=>w.ammo=w.mag);sel(1);P.pos.set(0,1.7,0);nextWave()}
+function setZoom(z){zoom=z;fovT=z?38:75;$('cross').style.transform=z?'scale(.45)':'';$('cross').style.borderColor=z?'#fffd':'#fff8'}
+function reset(){setZoom(false);enemies.forEach(e=>S.remove(e));enemies=[];wave=0;score=0;kills=0;Object.assign(P,{hp:100,rel:0,cd:0,yaw:0,pitch:0});WS.forEach(w=>w.ammo=w.mag);sel(1);P.pos.set(0,1.7,0);nextWave()}
 const ray=new THREE.Raycaster(),flash=$('flash');
 function hurt(d){P.hp-=d;flash.style.opacity=.5;setTimeout(()=>flash.style.opacity=0,120);if(P.hp<=0){P.hp=0;end()}}
 function dmgEnemy(e,amt,hd){e.hp-=amt;e.children.forEach(c=>{if(!c.userData.cl){c.material=c.material.clone();c.userData.cl=1}c.material.emissive.setHex(0x992222)});setTimeout(()=>e.children.forEach(c=>c.material.emissive.setHex(0)),80);
@@ -74,17 +106,18 @@ if(hits.length){const o=hits[0].object;if(o.userData.e){const hd=o.userData.head
 if(!w.auto)fire=false}
 function reload(){const w=WS[cw];if(P.rel<=0&&w.ammo<w.mag)P.rel=w.rel}
 function sel(i){cw=i;WS.forEach((w,j)=>w.obj.visible=j==i);P.rel=0;P.cd=.25}
-function end(){playing=false;if(document.pointerLockElement)document.exitPointerLock();$('msg').textContent='Ти загинув! Хвиля '+wave+' · Вбито '+kills+' · Рахунок '+score;$('go').textContent='ЩЕ РАЗ';$('ov').style.display='flex'}
+function end(){playing=false;setZoom(false);if(document.pointerLockElement)document.exitPointerLock();$('msg').textContent='Ти загинув! Хвиля '+wave+' · Вбито '+kills+' · Рахунок '+score;$('go').textContent='ЩЕ РАЗ';$('ov').style.display='flex'}
 // input
 $('go').onclick=()=>{reset();playing=true;$('ov').style.display='none';if(!touch)R.domElement.requestPointerLock()};
-if(touch){$('ctl').textContent='Лівий палець — рух · правий — приціл · кнопки — вогонь/перезарядка';$('bf').style.display=$('br').style.display=$('bs').style.display='flex'}
+if(touch){$('ctl').textContent='Лівий палець — рух · правий — приціл · кнопки — вогонь/перезарядка · подвійний тап справа — приціл (зближення)';$('bf').style.display=$('br').style.display=$('bs').style.display='flex'}
 addEventListener('keydown',e=>{keys[e.code]=1;if(e.code=='KeyR')reload();if(e.code=='Digit1')sel(0);if(e.code=='Digit2')sel(1);if(e.code=='Digit3')sel(2)});addEventListener('keyup',e=>keys[e.code]=0);
-addEventListener('mousemove',e=>{if(document.pointerLockElement){P.yaw-=e.movementX*.0022;P.pitch=Math.max(-1.4,Math.min(1.4,P.pitch-e.movementY*.0022))}});
-addEventListener('mousedown',e=>{if(!playing)return;if(!document.pointerLockElement)R.domElement.requestPointerLock();else fire=true});
+addEventListener('mousemove',e=>{if(document.pointerLockElement){const zk=zoom?.5:1;P.yaw-=e.movementX*.0022*zk;P.pitch=Math.max(-1.4,Math.min(1.4,P.pitch-e.movementY*.0022*zk))}});
+addEventListener('mousedown',e=>{if(!playing)return;if(!document.pointerLockElement)R.domElement.requestPointerLock();else if(e.button==0)fire=true});
 addEventListener('mouseup',()=>fire=false);
+addEventListener('mousedown',e=>{if(e.button==2&&playing)setZoom(!zoom)});
 const tch={};
-addEventListener('touchstart',e=>{for(const t of e.changedTouches){const el=document.elementFromPoint(t.clientX,t.clientY);if(el&&el.id=='bf'){fire=true;tch[t.identifier]='f'}else if(el&&el.id=='br'){reload();tch[t.identifier]='r'}else if(el&&el.id=='bs'){sel((cw+1)%3);tch[t.identifier]='r'}else if(t.clientX<innerWidth/2){tch[t.identifier]={m:1,x:t.clientX,y:t.clientY}}else tch[t.identifier]={l:1,x:t.clientX,y:t.clientY}}},{passive:true});
-addEventListener('touchmove',e=>{for(const t of e.changedTouches){const s=tch[t.identifier];if(!s||typeof s=='string')continue;if(s.m){joy.x=Math.max(-1,Math.min(1,(t.clientX-s.x)/50));joy.y=Math.max(-1,Math.min(1,(t.clientY-s.y)/50))}else{P.yaw-=(t.clientX-s.x)*.006;P.pitch=Math.max(-1.4,Math.min(1.4,P.pitch-(t.clientY-s.y)*.006));s.x=t.clientX;s.y=t.clientY}}},{passive:true});
+addEventListener('touchstart',e=>{for(const t of e.changedTouches){const el=document.elementFromPoint(t.clientX,t.clientY);if(el&&el.id=='bf'){fire=true;tch[t.identifier]='f'}else if(el&&el.id=='br'){reload();tch[t.identifier]='r'}else if(el&&el.id=='bs'){sel((cw+1)%3);tch[t.identifier]='r'}else if(t.clientX<innerWidth/2){tch[t.identifier]={m:1,x:t.clientX,y:t.clientY}}else{const now=performance.now();if(playing&&now-lastTap<320&&Math.hypot(t.clientX-lastTapX,t.clientY-lastTapY)<60){setZoom(!zoom);lastTap=0}else{lastTap=now;lastTapX=t.clientX;lastTapY=t.clientY}tch[t.identifier]={l:1,x:t.clientX,y:t.clientY}}}},{passive:true});
+addEventListener('touchmove',e=>{for(const t of e.changedTouches){const s=tch[t.identifier];if(!s||typeof s=='string')continue;if(s.m){joy.x=Math.max(-1,Math.min(1,(t.clientX-s.x)/50));joy.y=Math.max(-1,Math.min(1,(t.clientY-s.y)/50))}else{const zk=zoom?.5:1;P.yaw-=(t.clientX-s.x)*.006*zk;P.pitch=Math.max(-1.4,Math.min(1.4,P.pitch-(t.clientY-s.y)*.006*zk));s.x=t.clientX;s.y=t.clientY}}},{passive:true});
 addEventListener('touchend',e=>{for(const t of e.changedTouches){const s=tch[t.identifier];if(s=='f')fire=false;if(s&&s.m)joy={x:0,y:0};delete tch[t.identifier]}},{passive:true});
 addEventListener('resize',()=>{R.setSize(innerWidth,innerHeight);C.aspect=innerWidth/innerHeight;C.updateProjectionMatrix()});
 // loop
@@ -102,9 +135,9 @@ for(const e of enemies){v.set(P.pos.x-e.position.x,0,P.pos.z-e.position.z);const
 if(d>9){e.position.addScaledVector(v,e.sp*dt);resolve(e.position,.4)}
 e.cd-=dt;if(e.cd<=0&&d<28){e.cd=1.1+Math.random();ray.set(new THREE.Vector3(e.position.x,1.5,e.position.z),new THREE.Vector3(v.x,0,v.z));const h=ray.intersectObjects(solid)[0];if(!h||h.distance>d){if(Math.random()<.4)hurt(6+wave)}}}
 }
-recoil=Math.max(0,recoil-dt*8);
+recoil=Math.max(0,recoil-dt*8);if(Math.abs(C.fov-fovT)>.05){C.fov+=(fovT-C.fov)*Math.min(1,dt*14);C.updateProjectionMatrix()}
 C.position.set(P.pos.x,P.pos.y+Math.sin(bob)*.04,P.pos.z);C.rotation.set(P.pitch,P.yaw,0,'YXZ');
-gun.position.z=recoil*.04;gun.rotation.x=recoil*.04+(P.rel>0?-.5:0);for(let i=fx.length-1;i>=0;i--){const f=fx[i];f.t+=dt;f.m.scale.setScalar(1+f.t*9);f.m.material.opacity=Math.max(0,.8-f.t*2);if(f.t>.4){S.remove(f.m);fx.splice(i,1)}}
+gun.position.z=recoil*.04;gun.position.x=zoom?-.18:0;gun.position.y=zoom?.05:0;gun.rotation.x=recoil*.04+(P.rel>0?-.5:0);for(let i=fx.length-1;i>=0;i--){const f=fx[i];f.t+=dt;f.m.scale.setScalar(1+f.t*9);f.m.material.opacity=Math.max(0,.8-f.t*2);if(f.t>.4){S.remove(f.m);fx.splice(i,1)}}
 $('hp').textContent='❤ '+Math.ceil(P.hp);$('ammo').textContent=WS[cw].n+' · '+(P.rel>0?'Перезарядка…':WS[cw].ammo+' / '+WS[cw].mag);
 $('info').innerHTML='Хвиля '+wave+'<br>Рахунок '+score+' · Ворогів: '+enemies.length;
 R.render(S,C)}
