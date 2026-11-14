@@ -1,0 +1,40 @@
+{
+  "id": "calibration-range-v1",
+  "title": "Calibration Bay",
+  "coordinateSystem": "three-y-up",
+  "bounds": { "min": [-14, 0, -18], "max": [14, 7, 12] },
+  "spawn": [0, 1.1, 8],
+  "materials": [
+    { "id": "floor", "color": "#1a2430", "roughness": 0.72, "metalness": 0.16 },
+    { "id": "concrete", "color": "#334354", "roughness": 0.86, "metalness": 0.08 },
+    { "id": "stripe", "color": "#e8a43a", "roughness": 0.52, "metalness": 0.18, "emissive": "#2b1600" },
+    { "id": "target", "color": "#d5e0e6", "roughness": 0.64, "metalness": 0.12 },
+    { "id": "accent", "color": "#39d7c9", "roughness": 0.3, "metalness": 0.35, "emissive": "#0b4a47" }
+  ],
+  "blocks": [
+    { "id": "floor", "position": [0, -0.25, -3], "size": [28, 0.5, 30], "material": "floor", "collider": true },
+    { "id": "ceiling", "position": [0, 7.25, -3], "size": [28, 0.5, 30], "material": "concrete", "collider": true },
+    { "id": "left-wall", "position": [-14.25, 3.5, -3], "size": [0.5, 7.5, 30], "material": "concrete", "collider": true },
+    { "id": "right-wall", "position": [14.25, 3.5, -3], "size": [0.5, 7.5, 30], "material": "concrete", "collider": true },
+    { "id": "back-wall", "position": [0, 3.5, -18.25], "size": [28, 7.5, 0.5], "material": "concrete", "collider": true },
+    { "id": "start-console", "position": [0, 0.8, 6.8], "size": [4.2, 1.6, 0.6], "material": "concrete", "collider": true },
+    { "id": "lane-a", "position": [-4.5, 0.15, -4], "size": [0.08, 0.04, 24], "material": "stripe", "collider": false },
+    { "id": "lane-b", "position": [0, 0.15, -4], "size": [0.08, 0.04, 24], "material": "stripe", "collider": false },
+    { "id": "lane-c", "position": [4.5, 0.15, -4], "size": [0.08, 0.04, 24], "material": "stripe", "collider": false },
+    { "id": "target-wall", "position": [0, 3.4, -16.8], "size": [23, 5.8, 0.35], "material": "concrete", "collider": true }
+  ],
+  "targets": [
+    { "id": "target-01", "position": [-8, 2.0, -14.8], "size": [0.95, 1.5] },
+    { "id": "target-02", "position": [-4, 1.5, -15.0], "size": [0.8, 1.2] },
+    { "id": "target-03", "position": [0, 2.4, -14.5], "size": [1.1, 1.8] },
+    { "id": "target-04", "position": [4, 1.5, -15.0], "size": [0.8, 1.2] },
+    { "id": "target-05", "position": [8, 2.0, -14.8], "size": [0.95, 1.5] },
+    { "id": "target-06", "position": [-10, 3.5, -11.5], "size": [0.75, 1.1] },
+    { "id": "target-07", "position": [-5, 3.1, -10.8], "size": [0.8, 1.2] },
+    { "id": "target-08", "position": [0, 4.0, -11.2], "size": [0.9, 1.4] },
+    { "id": "target-09", "position": [5, 3.1, -10.8], "size": [0.8, 1.2] },
+    { "id": "target-10", "position": [10, 3.5, -11.5], "size": [0.75, 1.1] },
+    { "id": "target-11", "position": [-3.5, 4.8, -8.5], "size": [0.7, 1.1] },
+    { "id": "target-12", "position": [3.5, 4.8, -8.5], "size": [0.7, 1.1] }
+  ]
+}
