@@ -1,0 +1,9 @@
+{
+  "identity": "guest",
+  "boards": [
+    {
+      "id": "score-v1",
+      "rulesVersion": "v1"
+    }
+  ]
+}

@@ -1,19 +1,20 @@
 import en from '../i18n/en.json'
+import uk from '../i18n/uk.json'
 import zh from '../i18n/zh-CN.json'
 import type { Locale } from './save'
 
 export type Dictionary = Record<string, string>
-const DICTIONARIES: Record<Locale, Dictionary> = { en, 'zh-CN': zh }
+const DICTIONARIES: Record<Locale, Dictionary> = { uk, en, 'zh-CN': zh }
 
-/** Map a browser locale list to a supported locale: any zh* → Simplified Chinese, else English. */
+/** Arena Lab is pinned to Ukrainian; legacy locales remain readable in old saves. */
 export function detectLocale(languages: readonly string[] | undefined): Locale {
-  const first = (languages ?? []).find(Boolean) ?? ''
-  return first.toLowerCase().startsWith('zh') ? 'zh-CN' : 'en'
+  void languages
+  return 'uk'
 }
 
 /** A saved player choice always wins over browser detection. */
 export function resolveLocale(saved: Locale | '', languages: readonly string[] | undefined): Locale {
-  return saved === 'en' || saved === 'zh-CN' ? saved : detectLocale(languages)
+  return saved === 'uk' || saved === 'en' || saved === 'zh-CN' ? saved : detectLocale(languages)
 }
 
 export class I18n {

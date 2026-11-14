@@ -114,10 +114,11 @@ async function boot(): Promise<void> {
         if (g.mode === 'playing') pause()
         else if (g.mode === 'paused' && ui.screen === 'pause') resume()
       }
-      ui.frame(frameSeconds)
+      ui.frame()
       loop.paused = g.mode === 'paused'
       g.render(alpha, frameSeconds)
-      if (g.mode === 'playing' || g.mode === 'ended') ui.updateHud(g.run, g.compass())
+      if (g.mode === 'playing' || g.mode === 'ended') ui.updateHud(g.run)
+      input.endFrame()
     },
   })
   loop.start()
